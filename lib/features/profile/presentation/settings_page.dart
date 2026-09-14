@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/enums.dart';
+import '../../../shared/widgets/buttons.dart';
+import '../../auth/domain/auth_controller.dart';
+import '../../../core/backend/backend_mode.dart';
 import '../../../core/l10n/labels.dart';
 
 /// Écran 17 — réglages. Les valeurs par défaut protègent la vie privée (§165).
@@ -86,6 +89,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.lg),
+          if (Backend.isFirebase)
+            SecondaryButton(
+              label: context.l.signOut,
+              icon: Icons.logout_rounded,
+              color: AppColors.hard,
+              onPressed: () => ref.read(authRepositoryProvider).signOut(),
+            ),
           const SizedBox(height: AppSpacing.lg),
           Center(
             child: Text(context.l.prototypeFooter, style: AppTypography.metadata),

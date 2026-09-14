@@ -107,7 +107,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                         const SizedBox(height: AppSpacing.sm),
                         SecondaryButton(
                           label: context.l.splashHasAccount,
-                          onPressed: () => context.go('/home'),
+                          onPressed: () => context.go('/signin'),
                         ),
                       ],
                     ),

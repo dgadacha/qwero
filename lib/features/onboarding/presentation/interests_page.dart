@@ -7,6 +7,7 @@ import '../../../shared/models/enums.dart';
 import '../../../shared/widgets/buttons.dart';
 import '../../../shared/widgets/misc.dart';
 import '../../quests/domain/game_controller.dart';
+import '../../../core/backend/backend_mode.dart';
 import '../../../core/l10n/labels.dart';
 
 /// Écran 03 (§68) : au moins trois catégories.
@@ -90,7 +91,10 @@ class _InterestsPageState extends ConsumerState<InterestsPage> {
                 onPressed: enough
                     ? () {
                         ref.read(gameProvider.notifier).completeOnboarding(_selected.toList());
-                        context.go('/add-friends');
+                        // Le compte se crée ici, entre les intérêts et les amis (§65).
+                        context.go(
+                          Backend.isFirebase ? '/signin?mode=register' : '/add-friends',
+                        );
                       }
                     : null,
               ),
