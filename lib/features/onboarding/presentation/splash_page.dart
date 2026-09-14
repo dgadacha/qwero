@@ -50,15 +50,20 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               scale: 1.08 - 0.06 * _controller.value,
               child: child,
             ),
-            child: const SceneImage(Scene.sunsetOcean),
+            child: const SceneImage(Scene.hikeRidge),
           ),
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0x99080C14), Color(0x1A080C14), Color(0xCC080C14), Color(0xFF080C14)],
-                stops: [0.0, 0.34, 0.74, 0.96],
+                colors: [
+                  Color(0xB3080C14),
+                  Color(0x26080C14),
+                  Color(0x99080C14),
+                  Color(0xFF080C14),
+                ],
+                stops: [0.0, 0.4, 0.78, 0.97],
               ),
             ),
           ),
