@@ -37,7 +37,7 @@ const ParseSchema = z.object({
 
 export type ParsedQuest = z.infer<typeof ParseSchema>;
 
-const SYSTEM = `Tu analyses les défis que les joueurs de QUEST s'envoient entre amis.
+const SYSTEM = `Tu analyses les défis que les joueurs de Qwero s'envoient entre amis.
 
 Deux tâches :
 1. Décider si la consigne est acceptable.

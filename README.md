@@ -1,4 +1,4 @@
-# QUEST
+# Qwero
 
 Turn real life into a game.
 
@@ -78,7 +78,7 @@ lib/
   avatars sont générés à partir de l'identifiant. Le prototype est donc
   identique hors-ligne, et la direction artistique se règle en un endroit.
 - **Le feed est organisé par quête, pas par utilisateur.** C'est le principe
-  produit qui distingue QUEST d'un réseau social classique.
+  produit qui distingue Qwero d'un réseau social classique.
 - **Les résultats des amis restent masqués** tant que l'utilisateur n'a pas
   participé.
 

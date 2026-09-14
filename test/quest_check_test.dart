@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quest/features/quest_check/domain/quest_check_service.dart';
-import 'package:quest/features/quests/data/mock_data.dart';
-import 'package:quest/shared/models/enums.dart';
-import 'package:quest/shared/photos/scene.dart';
+import 'package:qwero/features/quest_check/domain/quest_check_service.dart';
+import 'package:qwero/features/quests/data/mock_data.dart';
+import 'package:qwero/shared/models/enums.dart';
+import 'package:qwero/shared/photos/scene.dart';
 
 void main() {
   group('QuestCheck', () {

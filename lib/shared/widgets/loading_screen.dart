@@ -28,8 +28,8 @@ class LoadingScreen extends StatelessWidget {
                   const Crown(size: 22),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'QUEST',
-                    style: AppTypography.label.copyWith(fontSize: 13, letterSpacing: 1.4),
+                    'Qwero',
+                    style: AppTypography.label.copyWith(fontSize: 15, letterSpacing: -0.2),
                   ),
                 ],
               ),

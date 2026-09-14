@@ -2,13 +2,13 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quest/features/quests/data/mock_data.dart';
-import 'package:quest/features/quests/data/mock_repository.dart';
-import 'package:quest/features/quests/domain/game_controller.dart';
-import 'package:quest/shared/models/enums.dart';
-import 'package:quest/shared/models/quest.dart';
-import 'package:quest/shared/models/social.dart';
-import 'package:quest/shared/photos/scene.dart';
+import 'package:qwero/features/quests/data/mock_data.dart';
+import 'package:qwero/features/quests/data/mock_repository.dart';
+import 'package:qwero/features/quests/domain/game_controller.dart';
+import 'package:qwero/shared/models/enums.dart';
+import 'package:qwero/shared/models/quest.dart';
+import 'package:qwero/shared/models/social.dart';
+import 'package:qwero/shared/photos/scene.dart';
 
 /// Boucle de jeu, telle qu'elle se comporte sur la source mockée.
 ///

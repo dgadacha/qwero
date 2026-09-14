@@ -1,7 +1,7 @@
 {
-  "name": "quest-functions",
+  "name": "qwero-functions",
   "version": "1.0.0",
-  "description": "Cloud Functions QUEST : quest engine, XP, QuestCheck",
+  "description": "Cloud Functions Qwero : quest engine, XP, QuestCheck",
   "main": "lib/index.js",
   "type": "commonjs",
   "engines": {

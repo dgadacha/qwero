@@ -14,7 +14,7 @@ class QuestApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     SystemChrome.setSystemUIOverlayStyle(AppTheme.systemOverlay);
     return MaterialApp.router(
-      title: 'QUEST',
+      title: 'Qwero',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       localizationsDelegates: const [

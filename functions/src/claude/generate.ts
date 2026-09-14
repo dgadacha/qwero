@@ -64,7 +64,7 @@ export type GeneratedQuest = z.infer<typeof QuestSchema>;
  * Politique de sécurité (§42, §138). Elle est en tête du prompt et mise en
  * cache : elle ne change pas d'un lot à l'autre.
  */
-const SYSTEM = `Tu écris les quêtes quotidiennes de QUEST, une application où des amis relèvent chaque jour les mêmes défis dans la vraie vie et en rapportent une photo prise depuis l'application.
+const SYSTEM = `Tu écris les quêtes quotidiennes de Qwero, une application où des amis relèvent chaque jour les mêmes défis dans la vraie vie et en rapportent une photo prise depuis l'application.
 
 Ce qui fait une bonne quête :
 - Elle se fait aujourd'hui, là où la personne se trouve déjà.

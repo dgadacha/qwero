@@ -10,7 +10,7 @@ import { defineInt, defineSecret, defineString } from 'firebase-functions/params
 
 export const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
-export const region = defineString('QUEST_REGION', { default: 'europe-west1' });
+export const region = defineString('QWERO_REGION', { default: 'europe-west1' });
 
 /** Seuils du Score Engine (§36). */
 export const passThreshold = defineInt('QUESTCHECK_PASS', { default: 90 });

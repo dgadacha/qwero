@@ -20,13 +20,13 @@ class QuestLogo extends StatelessWidget {
           SizedBox(height: size * 0.16),
         ],
         Text(
-          'QUEST',
+          'Qwero',
           style: TextStyle(
             fontFamily: AppTypography.family,
             fontSize: size,
             height: 1,
             fontWeight: FontWeight.w800,
-            letterSpacing: -size * 0.02,
+            letterSpacing: -size * 0.03,
             color: color ?? AppColors.textPrimary,
             shadows: [
               BoxShadow(
