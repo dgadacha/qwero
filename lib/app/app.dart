@@ -7,8 +7,8 @@ import '../core/theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import 'router.dart';
 
-class QuestApp extends ConsumerWidget {
-  const QuestApp({super.key});
+class QweroApp extends ConsumerWidget {
+  const QweroApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -23,15 +23,33 @@ first » du cahier des charges.
 | Phase | Contenu | État |
 | --- | --- | --- |
 | 1 | Parcours complet mocké, design system, 17 écrans | fait |
-| 2 | Firebase (Auth, Firestore, Storage, Functions), QuestCheck via Claude | à faire |
+| 2 | Firestore, règles, Cloud Functions, QuestCheck via Claude | code écrit, à déployer |
 | 3 | Analytics, Remote Config, partage externe | à faire |
+
+Le projet Firebase `qwero-nc` existe et `firebase_options.dart` est généré.
+Restent trois activations en console : la base Firestore, Storage, et le plan
+Blaze — les Cloud Functions ne peuvent pas appeler l'API Claude sans lui.
 
 ## Lancer
 
 ```bash
 flutter pub get
 dart run build_runner build      # modèles Freezed
-flutter run
+flutter run                      # données mockées, aucun backend requis
+```
+
+Contre le backend :
+
+```bash
+flutter run --dart-define=BACKEND=firebase
+flutter run --dart-define=BACKEND=firebase --dart-define=EMULATORS=true
+```
+
+Les émulateurs Firebase :
+
+```bash
+firebase emulators:start
+cd functions && npm test         # logique métier
 ```
 
 Pour régler la direction artistique, la planche-contact des scènes :
@@ -39,6 +57,25 @@ Pour régler la direction artistique, la planche-contact des scènes :
 ```bash
 flutter run --dart-define=START=/scenes
 ```
+
+## Backend
+
+```
+firestore.rules        règles de sécurité (§153), 37 tests
+firestore.indexes.json index composites du feed et des sets
+storage.rules          dépôt des preuves
+functions/src/
+  claude/              QuestCheck, génération, modération
+  game/                validation, XP, streak, score engine
+  quests/              pool, sets du jour, assignations
+  social/              amitiés, réactions
+  notifications/       push et journal
+  functions/           points d'entrée exposés
+```
+
+Le serveur est autoritaire : le client crée sa participation avec sa preuve,
+un déclencheur la valide, et lui seul écrit le statut, l'XP et le streak. La
+clé Claude vit côté fonctions, jamais dans l'application.
 
 ## Architecture
 
@@ -48,6 +85,7 @@ lib/
   core/
     theme/      tokens de design : couleurs, espacements, rayons, typo, motion
     l10n/       libellés dérivés des enums, helpers de traduction
+    backend/    choix de la source de données, initialisation Firebase
     dev/        outils de réglage hors parcours utilisateur
   features/
     onboarding/ splash, présentation, intérêts, amis
@@ -82,12 +120,16 @@ lib/
 - **Les résultats des amis restent masqués** tant que l'utilisateur n'a pas
   participé.
 
-## Données mockées
+## Sources de données
 
-Tout le contenu (quêtes, amis, participations) vient de
-`features/quests/data/mock_data.dart`. Les titres de quêtes n'y sont pas
-traduits : en production ils sont générés par Claude dans la langue du
-joueur et servis par Firestore.
+Les écrans ne connaissent qu'un contrat, `QuestRepository`, avec deux
+implémentations : `MockRepository` (tout en mémoire, jouable hors-ligne) et
+`FirestoreRepository`. Le mode se choisit au lancement, ce qui permet de
+travailler l'interface sans backend et de basculer sans toucher aux écrans.
+
+Le contenu mocké vit dans `features/quests/data/mock_data.dart`. Ses titres de
+quêtes ne sont pas traduits : en production ils sont générés par Claude dans la
+langue du joueur.
 
 ## Tests
 

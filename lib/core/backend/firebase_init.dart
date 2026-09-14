@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../firebase_options.dart';
 import 'backend_mode.dart';
 
 /// Initialisation Firebase.
@@ -18,7 +19,9 @@ abstract final class FirebaseInit {
   static Future<void> ensure() async {
     if (_done || !Backend.isFirebase) return;
 
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
     if (Backend.useEmulators) {
       const host = Backend.emulatorHost;
@@ -34,5 +37,5 @@ abstract final class FirebaseInit {
   }
 
   /// Région des Cloud Functions, alignée sur `config.ts`.
-  static const region = 'europe-west1';
+  static const region = 'australia-southeast1';
 }

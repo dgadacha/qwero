@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "404721064654",
+    "project_id": "qwero-nc",
+    "storage_bucket": "qwero-nc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404721064654:android:a5f42a682b1f3b57cc4e9f",
+        "android_client_info": {
+          "package_name": "com.tealforge.qwero"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC962W1UUVbzHQi4TfrA081Z0p8TxdtJP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
