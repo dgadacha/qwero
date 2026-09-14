@@ -1,0 +1,377 @@
+{
+  "@@locale": "en",
+  "tagline": "Turn real life into a game.",
+  "@tagline": {
+    "description": "Signature de marque, non traduite"
+  },
+  "splashStart": "Let's go",
+  "splashHasAccount": "I already have an account",
+  "skip": "Skip",
+  "next": "Next",
+  "onboarding1Title": "Real challenges.\nReal moments.",
+  "onboarding1Body": "Take on quests, share what you did, and see the world differently.",
+  "onboarding2Title": "The same quests\nas your friends.",
+  "onboarding2Body": "Every day you all get the same challenges. Then you see what everyone did with them.",
+  "onboarding3Title": "Prove it,\nright now.",
+  "onboarding3Body": "You shoot from the app, QuestCheck verifies, and your friends' answers unlock.",
+  "onboardingPickInterests": "Pick my interests",
+  "interestsTitle": "What are you\ninto?",
+  "interestsSubtitle": "Pick at least {count} categories to get quests that suit you.",
+  "@interestsSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "interestsRemaining": "{count} more to pick",
+  "@interestsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addFriendsTitle": "Add your friends",
+  "addFriendsSubtitle": "QUEST only works if you're a few. Three friends is enough.",
+  "searchUsername": "Search a username",
+  "qrCode": "QR code",
+  "inviteLink": "Link",
+  "contacts": "Contacts",
+  "suggestions": "SUGGESTIONS",
+  "add": "Add",
+  "added": "Added",
+  "later": "Later",
+  "continueWithFriends": "{count, plural, =1{Continue with 1 friend} other{Continue with {count} friends}}",
+  "@continueWithFriends": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backendOnly": "Available with the backend",
+  "navQuests": "Quests",
+  "navExplore": "Explore",
+  "navFriends": "Friends",
+  "navProfile": "Profile",
+  "homeGreeting": "Hey {name} 👋",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyQuests": "Today's quests",
+  "friendsToday": "Your friends today",
+  "yourDay": "YOUR DAY",
+  "dayComplete": "DAY COMPLETE",
+  "questCount": "{done} / {total} quests",
+  "@questCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "xpToday": "XP today",
+  "streakDays": "{count, plural, =1{1 day streak} other{{count} day streak}}",
+  "@streakDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "xpProgress": "{current} / {total} XP",
+  "@xpProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "questDone": "Done",
+  "minutes": "{count} min",
+  "@minutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "startQuest": "Start the quest",
+  "endsIn": "Ends in {hours}h{minutes}",
+  "@endsIn": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "questOverForToday": "Quest closed for today",
+  "peopleDidIt": "{count} people did it",
+  "@peopleDidIt": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "resultsHidden": "RESULTS HIDDEN",
+  "resultsHiddenTitle": "Results hidden",
+  "completeToReveal": "Complete the quest to see what your friends found.",
+  "shareQuest": "Share the quest",
+  "report": "Report",
+  "photo": "PHOTO",
+  "video": "VIDEO",
+  "cameraOnly": "This quest must be shot from the app.",
+  "analysing": "ANALYSING",
+  "notSure": "We're not sure...",
+  "missingCriteria": "Missing: {items}.",
+  "@missingCriteria": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "retry": "Try again",
+  "contest": "Contest",
+  "contestSent": "Contest sent",
+  "contestToast": "Request sent. We'll get back to you after review.",
+  "checkPhotoFromApp": "Photo taken in the app",
+  "checkLiveCapture": "Live capture",
+  "checkOutdoor": "Outdoor environment",
+  "checkSky": "Sky detected",
+  "checkRed": "Red object detected",
+  "checkYellow": "Yellow object detected",
+  "checkVehicle": "Vehicle detected",
+  "checkSunset": "Sunset detected",
+  "checkGeo": "Location verified",
+  "reasonPass": "Every requirement of the quest is met.",
+  "reasonUncertain": "Some elements are missing to validate this with certainty.",
+  "reasonFail": "This photo doesn't show what the quest asks for.",
+  "questComplete": "QUEST COMPLETE!",
+  "xpGained": "+{amount} XP",
+  "@xpGained": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "friendResultsUnlocked": "FRIEND RESULTS UNLOCKED",
+  "seeParticipations": "See what they did",
+  "backHome": "Back home",
+  "participations": "{count} entries",
+  "participationsWord": "entries",
+  "@participations": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "tabFriends": "Friends",
+  "tabFavorites": "Today's favorites",
+  "doQuestToReveal": "Do the quest to see what your friends found.",
+  "doTheQuest": "Do the quest",
+  "upToDate": "You're all caught up",
+  "upToDateBody": "Now go and do something.",
+  "findQuest": "Find a quest",
+  "commentCount": "{count} comments",
+  "@commentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "firstToReact": "Be the first to react.",
+  "yourComment": "Your comment",
+  "you": "You",
+  "favorite": "🏆 FAVORITE",
+  "justNow": "just now",
+  "agoMinutes": "{count} min ago",
+  "@agoMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agoHours": "{count} h ago",
+  "@agoHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agoDays": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@agoDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exploreTitle": "Explore",
+  "tabWorld": "World",
+  "tabTrending": "Trending",
+  "tabCommunity": "Community",
+  "worldQuest": "WORLD QUEST",
+  "trendingQuests": "Trending quests",
+  "aroundTheWorld": "Around the world",
+  "mostDoneToday": "Most done today",
+  "communityMade": "Made by the community",
+  "friendsTitle": "Friends",
+  "tabActivity": "Activity",
+  "tabChallenges": "Challenges",
+  "tabInvitations": "Invitations",
+  "noChallenge": "No challenge",
+  "noChallengeBody": "Your friends are way too quiet...",
+  "sendChallenge": "Send a challenge",
+  "noInvitation": "No invitation",
+  "noInvitationBody": "Invite your friends, QUEST is far better together.",
+  "addFriends": "Add friends",
+  "challengeDone": "Challenge done",
+  "challengeDeclined": "Declined",
+  "timeLeftHours": "{hours}h left",
+  "@timeLeftHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "accept": "Accept",
+  "decline": "Decline",
+  "seeDuel": "See the duel",
+  "mutualFriends": "{count} mutual friends",
+  "@mutualFriends": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "challengedYou": "{name} CHALLENGED YOU",
+  "@challengedYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "youChallenged": "YOU CHALLENGED {name}",
+  "@youChallenged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "friendActivityCompleted": "completed {count} quests today",
+  "@friendActivityCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "friendActivityChallenged": "challenged you",
+  "friendActivityInvited": "invited you to a duo quest",
+  "friendActivityLevelUp": "reached level {level}",
+  "@friendActivityLevelUp": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "friendActivityReacted": "liked your photo",
+  "whatDoYouWant": "What do you want to do?",
+  "challengeAFriend": "Challenge a friend with your own quest.",
+  "createQuest": "Create a quest",
+  "createQuestBody": "Come up with a challenge, the community will take it on.",
+  "composerHint": "Find the weirdest car outside",
+  "composerSubtitle": "Write your prompt. It gets parsed and checked before it goes out.",
+  "detectedCriteria": "DETECTED REQUIREMENTS",
+  "sendTo": "SEND TO",
+  "sendChallengeCta": "Send the challenge",
+  "proposeQuest": "Submit the quest",
+  "challengeSentTo": "Challenge sent to {name}.",
+  "@challengeSentTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "questSentToModeration": "Quest submitted for review.",
+  "statQuests": "Quests",
+  "statStreak": "Day streak",
+  "statBadges": "Badges",
+  "categories": "Categories",
+  "badges": "Badges",
+  "level": "LVL {level}",
+  "@level": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "settings": "Settings",
+  "privacy": "Privacy",
+  "whoSeesMyEntries": "Who sees my entries",
+  "visibilityPrivate": "Only me",
+  "visibilityFriends": "My friends",
+  "visibilityPublic": "Everyone",
+  "joinPublicWorldQuests": "Join public World Quests",
+  "joinPublicWorldQuestsBody": "Your photo and username may show, never your exact location.",
+  "notifications": "Notifications",
+  "morningQuests": "Morning quests",
+  "friendActivity": "Friend activity",
+  "feedback": "Feedback",
+  "sounds": "Sounds",
+  "haptics": "Haptics",
+  "prototypeFooter": "QUEST — prototype",
+  "difficultyEasy": "EASY",
+  "difficultyMedium": "MEDIUM",
+  "difficultyHard": "HARD",
+  "difficultyWorld": "WORLD QUEST",
+  "category_adventure": "Adventure",
+  "category_photography": "Photo",
+  "category_creative": "Creative",
+  "category_food": "Food",
+  "category_social": "Social",
+  "category_nature": "Nature",
+  "category_sport": "Sport",
+  "category_music": "Music",
+  "category_gaming": "Gaming",
+  "category_travel": "Travel",
+  "category_funny": "Fun",
+  "category_observation": "Observation",
+  "category_exploration": "Exploration",
+  "reqPhoto": "Photo",
+  "reqOutdoor": "Outdoor",
+  "reqLive": "Live capture",
+  "reqSky": "Sky visible",
+  "reqCar": "A car",
+  "reqRed": "Red",
+  "reqYellow": "Yellow",
+  "reqBefore20": "Before 8pm"
+}
