@@ -29,3 +29,19 @@ android/.gradle/
 android/local.properties
 android/key.properties
 *.jks
+
+# Cloud Functions
+functions/node_modules/
+functions/lib/
+functions/lib-test/
+functions/.env
+functions/.env.*
+!functions/.env.example
+
+# Émulateurs Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+pubsub-debug.log

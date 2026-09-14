@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Règles Storage (§82).
+//
+// L'utilisateur dépose sa preuve sous son propre préfixe, en image, taille
+// bornée. La lecture publique reste possible : les URLs sont opaques et la
+// visibilité sociale est portée par la participation correspondante.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /completions/{userId}/{completionId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+                    && request.auth.uid == userId
+                    && request.resource.size < 8 * 1024 * 1024
+                    && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      // Une preuve ne se remplace pas : une nouvelle tentative crée une
+      // nouvelle participation (§41, protection contre le rejeu).
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /avatars/{userId} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+                   && request.auth.uid == userId
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

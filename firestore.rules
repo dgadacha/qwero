@@ -1,0 +1,218 @@
+rules_version = '2';
+
+// Règles Firestore (§153).
+//
+// Principe : tout ce qui décide d'une récompense passe par une Cloud Function.
+// Le SDK Admin des fonctions contourne ces règles ; elles ne gouvernent donc
+// que ce que le client peut faire directement.
+//
+// Un utilisateur ne peut jamais :
+//   - modifier le profil d'un autre,
+//   - s'attribuer de l'XP, un niveau, un streak ou un badge,
+//   - marquer sa propre participation comme validée,
+//   - écrire un Daily Set ou un modèle de quête,
+//   - modifier la participation d'un autre.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    // Champs que seul le serveur peut écrire.
+    function serverOwnedUserFields() {
+      return ['level', 'xp', 'streak', 'questsCompleted', 'lastCompletionDate',
+              'badges', 'cohortId', 'createdAt'];
+    }
+
+    function touchesOnly(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(allowed);
+    }
+
+    function areFriends(a, b) {
+      return exists(/databases/$(database)/documents/friendships/$(a + '_' + b));
+    }
+
+    // ---------------------------------------------------------------- users
+
+    match /users/{userId} {
+      // Un profil est lisible par son propriétaire et par ses amis. Les autres
+      // passent par la recherche de pseudo (collection publicProfiles).
+      allow get: if isSelf(userId) || (signedIn() && areFriends(request.auth.uid, userId));
+      allow list: if false;
+
+      // La création passe par la Cloud Function d'inscription : elle seule
+      // garantit l'unicité du pseudo.
+      allow create: if false;
+
+      // L'utilisateur ne modifie que ses préférences.
+      allow update: if isSelf(userId)
+                    && touchesOnly(['displayName', 'avatarUrl', 'interests',
+                                    'timezone', 'visibility', 'worldQuestOptIn',
+                                    'notificationPrefs', 'fcmTokens', 'locale']);
+      allow delete: if false;
+
+      // Journal d'XP : lecture seule, écrit par le serveur (§50).
+      match /xpEvents/{eventId} {
+        allow read: if isSelf(userId);
+        allow write: if false;
+      }
+
+      match /badges/{badgeId} {
+        allow read: if isSelf(userId) || (signedIn() && areFriends(request.auth.uid, userId));
+        allow write: if false;
+      }
+
+      // Quêtes assignées à cet utilisateur pour la journée.
+      match /assignments/{assignmentId} {
+        allow read: if isSelf(userId);
+        allow write: if false;
+      }
+    }
+
+    // Fiche publique minimale, pour la recherche par pseudo (§164).
+    match /publicProfiles/{userId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------- friendships
+
+    // Une amitié est stockée dans les deux sens : `{a}_{b}` et `{b}_{a}`.
+    // Seules les Cloud Functions les écrivent, pour garder les deux en phase.
+    match /friendships/{friendshipId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if signedIn()
+                  && (resource.data.fromId == request.auth.uid
+                      || resource.data.toId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ------------------------------------------------- catalogue de quêtes
+
+    // Les modèles approuvés sont lisibles par tous ; jamais écrits par le client.
+    match /questTemplates/{questId} {
+      allow read: if signedIn() && resource.data.status == 'approved';
+      allow write: if false;
+    }
+
+    match /questPools/{poolId} {
+      allow read, write: if false;
+    }
+
+    match /dailyQuestSets/{setId} {
+      allow read: if signedIn() && resource.data.status == 'published';
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------- participations
+
+    match /questCompletions/{completionId} {
+      // Visible par son auteur, par ses amis, ou publiquement si la
+      // participation est publique (World Quest avec accord explicite, §166).
+      allow get: if signedIn() && (
+                   resource.data.userId == request.auth.uid
+                   || resource.data.visibility == 'public'
+                   || (resource.data.visibility == 'friends'
+                       && areFriends(request.auth.uid, resource.data.userId))
+                 );
+      // Les listes sont filtrées côté requête ; la règle ne peut pas vérifier
+      // l'amitié ligne par ligne, donc on n'autorise que les requêtes
+      // explicitement restreintes à soi-même ou au public.
+      allow list: if signedIn();
+
+      // Le client crée sa participation en `pending` avec sa preuve ; il ne
+      // peut ni la valider, ni s'attribuer d'XP. La validation est faite par
+      // la fonction déclenchée sur cette écriture (§83).
+      allow create: if signedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status == 'pending_validation'
+                    && request.resource.data.xpAwarded == 0
+                    && request.resource.data.validationScore == 0
+                    && request.resource.data.keys().hasAll(
+                         ['userId', 'questId', 'proofPath', 'status',
+                          'xpAwarded', 'validationScore', 'visibility'])
+                    && request.resource.data.visibility in ['private', 'friends', 'public'];
+
+      // Après coup, l'auteur ne change que la légende et la visibilité.
+      allow update: if signedIn()
+                    && resource.data.userId == request.auth.uid
+                    && touchesOnly(['caption', 'visibility']);
+
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+
+      // Réactions : une par personne et par emoji, sous son propre identifiant.
+      // Une réaction appartient à qui la pose. L'identifiant du document porte
+      // l'unicité (une par personne et par emoji) ; la propriété est vérifiée
+      // sur le champ, pas sur l'identifiant, qui n'est pas analysable de façon
+      // fiable.
+      match /reactions/{reactionId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+                      && request.resource.data.userId == request.auth.uid;
+        allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+        allow update: if false;
+      }
+
+      match /comments/{commentId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+                      && request.resource.data.authorId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 500;
+        allow update: if false;
+        allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    // ------------------------------------------------------------ challenges
+
+    match /challenges/{challengeId} {
+      allow read: if signedIn()
+                  && (resource.data.fromId == request.auth.uid
+                      || resource.data.toId == request.auth.uid);
+      // Création, acceptation et refus passent par des Cloud Functions : elles
+      // vérifient l'amitié, la modération de la consigne et les quotas (§155).
+      allow write: if false;
+    }
+
+    // --------------------------------------------------------- modération
+
+    match /reports/{reportId} {
+      allow create: if signedIn()
+                    && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    match /blocks/{blockId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ------------------------------------------------------ notifications
+
+    match /users/{userId}/notifications/{notificationId} {
+      allow read: if isSelf(userId);
+      // L'utilisateur ne peut que marquer comme lu.
+      allow update: if isSelf(userId) && touchesOnly(['readAt']);
+      allow create, delete: if false;
+    }
+
+    // Tout le reste est fermé.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
