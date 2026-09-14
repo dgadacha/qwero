@@ -1,6 +1,8 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,6 +36,10 @@ class _QuestCameraPageState extends State<QuestCameraPage> with SingleTickerProv
 
   /// Ce que « voit » l'objectif. Chaque quête propose une scène plausible.
   late Scene _framed = _scenesFor(widget.quest).first;
+
+  /// Le contenu du viseur est capturé pixel par pixel : la preuve envoyée au
+  /// serveur est une vraie image, pas un identifiant de scène.
+  final _viewfinder = GlobalKey();
   int _sceneIndex = 0;
   bool _capturing = false;
 
@@ -55,12 +61,39 @@ class _QuestCameraPageState extends State<QuestCameraPage> with SingleTickerProv
     if (_capturing) return;
     setState(() => _capturing = true);
     HapticFeedback.mediumImpact();
+
+    final capturedAt = DateTime.now();
+    final bytes = await _grabViewfinder();
     await _shutter.forward(from: 0);
     if (!mounted) return;
+
     context.pushReplacement(
       '/check',
-      extra: QuestCheckArgs(quest: widget.quest, scene: _framed),
+      extra: QuestCheckArgs(
+        quest: widget.quest,
+        scene: _framed,
+        imageBytes: bytes,
+        capturedAt: capturedAt,
+      ),
     );
+  }
+
+  /// Rend le viseur en image. La scène est dessinée par le code : la capture
+  /// produit donc une photo cohérente avec ce que le joueur voyait.
+  Future<Uint8List> _grabViewfinder() async {
+    try {
+      final boundary =
+          _viewfinder.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return Uint8List(0);
+
+      final image = await boundary.toImage(pixelRatio: 2);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      return data?.buffer.asUint8List() ?? Uint8List(0);
+    } catch (error) {
+      debugPrint('Capture impossible : \$error');
+      return Uint8List(0);
+    }
   }
 
   void _cycleScene() {
@@ -88,12 +121,15 @@ class _QuestCameraPageState extends State<QuestCameraPage> with SingleTickerProv
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   child: ClipRRect(
                     borderRadius: AppRadius.cardR,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        SceneImage(_framed),
-                        const _ViewfinderFrame(),
-                      ],
+                    child: RepaintBoundary(
+                      key: _viewfinder,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          SceneImage(_framed),
+                          const _ViewfinderFrame(),
+                        ],
+                      ),
                     ),
                   ),
                 ),

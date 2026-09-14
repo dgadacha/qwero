@@ -18,12 +18,12 @@ class QuestCompleteArgs {
   const QuestCompleteArgs({
     required this.quest,
     required this.scene,
-    required this.result,
+    required this.completion,
   });
 
   final Quest quest;
   final Scene scene;
-  final QuestCheckResult result;
+  final QuestCompletion completion;
 }
 
 /// Écran 10 — réussite (§38, §189).
@@ -94,7 +94,7 @@ class _QuestCompletePageState extends ConsumerState<QuestCompletePage>
   Widget build(BuildContext context) {
     final quest = widget.args.quest;
     final user = ref.watch(currentUserProvider);
-    final passed = widget.args.result.checks.where((c) => c.passed).toList();
+    final passed = widget.args.completion.checks.where((c) => c.passed).toList();
 
     return Scaffold(
       body: GestureDetector(
@@ -150,7 +150,7 @@ class _QuestCompletePageState extends ConsumerState<QuestCompletePage>
                           CurvedAnimation(parent: _xp, curve: Curves.easeOutBack),
                         ),
                         child: Text(
-                          context.l.xpGained(quest.xpReward),
+                          context.l.xpGained(widget.args.completion.xpAwarded),
                           style: AppTypography.hero.copyWith(
                             fontSize: 38,
                             color: AppColors.xp,
@@ -224,10 +224,10 @@ class _QuestCompletePageState extends ConsumerState<QuestCompletePage>
                               ),
                               child: Row(
                                 children: [
-                                  StreakBadge(user.streak, large: true),
+                                  StreakBadge(user?.streak ?? 0, large: true),
                                   const Spacer(),
                                   Text(
-                                    context.l.level(user.level),
+                                    context.l.level(user?.level ?? 1),
                                     style: AppTypography.bodyStrong.copyWith(
                                       color: AppColors.primaryLight,
                                     ),

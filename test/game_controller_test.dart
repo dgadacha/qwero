@@ -1,134 +1,149 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quest/features/quest_check/domain/quest_check_service.dart';
+import 'package:quest/features/quests/data/mock_data.dart';
+import 'package:quest/features/quests/data/mock_repository.dart';
 import 'package:quest/features/quests/domain/game_controller.dart';
+import 'package:quest/shared/models/enums.dart';
+import 'package:quest/shared/models/quest.dart';
+import 'package:quest/shared/models/social.dart';
 import 'package:quest/shared/photos/scene.dart';
 
+/// Boucle de jeu, telle qu'elle se comporte sur la source mockée.
+///
+/// Les mêmes actions passent par des Cloud Functions en mode Firebase : ces
+/// tests vérifient l'enchaînement côté client, pas les règles de récompense,
+/// qui sont couvertes côté serveur.
 void main() {
   late ProviderContainer container;
+  late MockRepository repository;
 
-  setUp(() => container = ProviderContainer());
+  setUp(() {
+    repository = MockRepository();
+    container = ProviderContainer(
+      overrides: [repositoryProvider.overrideWith((_) => repository)],
+    );
+    // Force la construction du contrôleur et de ses abonnements.
+    container.read(gameProvider);
+  });
+
   tearDown(() => container.dispose());
 
   GameController controller() => container.read(gameProvider.notifier);
 
-  test("une quête terminée attribue son XP et fait avancer le streak", () {
-    final before = container.read(gameProvider).user;
-    final quest = container.read(gameProvider).todaySet.hard;
-
-    controller().completeQuest(
+  Future<void> complete(Quest quest, Scene scene) async {
+    repository.pendingScene = scene;
+    await controller().submitProof(
       quest: quest,
-      scene: Scene.sunsetOcean,
-      result: QuestCheckService.analyse(quest: quest, scene: Scene.sunsetOcean),
+      imageBytes: Uint8List(0),
+      capturedAt: DateTime.now(),
     );
+    // Laisse les flux propager l'état.
+    await Future<void>.delayed(Duration.zero);
+  }
 
-    final after = container.read(gameProvider).user;
-    expect(after.xp, before.xp + quest.xpReward);
+  test("une quête réussie attribue son XP et fait avancer le streak", () async {
+    final before = repository.user;
+
+    await complete(MockData.hard, Scene.sunsetOcean);
+
+    final after = repository.user;
+    expect(after.xp, before.xp + MockData.hard.xpReward);
     expect(after.streak, before.streak + 1);
     expect(after.questsCompleted, before.questsCompleted + 1);
   });
 
-  test('le streak ne monte qu\'une fois par jour', () {
-    final set = container.read(gameProvider).todaySet;
-    final start = container.read(gameProvider).user.streak;
+  test("une photo hors-sujet n'attribue rien", () async {
+    final before = repository.user;
 
-    for (final quest in [set.easy, set.medium]) {
-      controller().completeQuest(
-        quest: quest,
-        scene: quest.scene,
-        result: QuestCheckService.analyse(quest: quest, scene: quest.scene),
-      );
-    }
+    await complete(MockData.hard, Scene.coffee);
 
-    expect(container.read(gameProvider).user.streak, start + 1);
+    expect(repository.user.xp, before.xp);
+    expect(repository.user.streak, before.streak);
+    expect(container.read(gameProvider).isCompleted(MockData.hard.id), isFalse);
   });
 
-  test("les résultats des amis restent masqués tant qu'on n'a pas participé", () {
-    final quest = container.read(gameProvider).todaySet.hard;
-    expect(container.read(gameProvider).stateOf(quest.id).revealsFriends, isFalse);
+  test('le streak ne monte pas deux fois le même jour', () async {
+    final before = repository.user.streak;
 
-    controller().completeQuest(
-      quest: quest,
-      scene: Scene.sunsetOcean,
-      result: QuestCheckService.analyse(quest: quest, scene: Scene.sunsetOcean),
+    await complete(MockData.easy, Scene.redCar);
+    await complete(MockData.medium, Scene.openRoad);
+
+    expect(repository.user.streak, before + 1);
+  });
+
+  test("les résultats des amis restent masqués tant qu'on n'a pas participé", () async {
+    expect(
+      container.read(gameProvider).stateOf(MockData.hard.id).revealsFriends,
+      isFalse,
     );
 
-    expect(container.read(gameProvider).stateOf(quest.id).revealsFriends, isTrue);
+    await complete(MockData.hard, Scene.sunsetOcean);
+
+    expect(
+      container.read(gameProvider).stateOf(MockData.hard.id).revealsFriends,
+      isTrue,
+    );
   });
 
-  test('une réaction peut être posée puis retirée', () {
-    final quest = container.read(gameProvider).todaySet.hard;
-    final completion = container.read(gameProvider).friendCompletions(quest.id).first;
+  test('sa propre participation ouvre le fil de la quête', () async {
+    final before = repository.completionsOf(MockData.hard.id).length;
+
+    await complete(MockData.hard, Scene.sunsetOcean);
+
+    final after = repository.completionsOf(MockData.hard.id);
+    expect(after.length, before + 1);
+    expect(after.first.author.id, repository.currentUserId);
+  });
+
+  test('une réaction peut être posée puis retirée', () async {
+    final completion = repository.completionsOf(MockData.hard.id).first;
     final before = completion.reactions.length;
 
-    controller().toggleReaction(quest.id, completion.id, '👏');
-    var updated = container
-        .read(gameProvider)
-        .friendCompletions(quest.id)
+    await controller().toggleReaction(MockData.hard.id, completion.id, '👏');
+    var updated = repository
+        .completionsOf(MockData.hard.id)
         .firstWhere((c) => c.id == completion.id);
     expect(updated.reactions.length, before + 1);
     expect(updated.reactions.last.mine, isTrue);
 
-    controller().toggleReaction(quest.id, completion.id, '👏');
-    updated = container
-        .read(gameProvider)
-        .friendCompletions(quest.id)
+    await controller().toggleReaction(MockData.hard.id, completion.id, '👏');
+    updated = repository
+        .completionsOf(MockData.hard.id)
         .firstWhere((c) => c.id == completion.id);
     expect(updated.reactions.length, before);
   });
 
-  test('un niveau est franchi quand le seuil est dépassé', () {
-    final set = container.read(gameProvider).todaySet;
-    final before = container.read(gameProvider).user;
+  test('accepter une invitation ajoute la personne aux amis', () async {
+    final invitation = repository.invitations.first;
+    final before = repository.friends.length;
 
-    for (final quest in set.all) {
-      controller().completeQuest(
-        quest: quest,
-        scene: quest.scene,
-        result: QuestCheckService.analyse(quest: quest, scene: quest.scene),
-      );
-    }
+    await controller().answerInvitation(invitation.id, accept: true);
 
-    final after = container.read(gameProvider).user;
-    final gained = set.all.fold(0, (sum, q) => sum + q.xpReward);
-    expect(after.level, greaterThanOrEqualTo(before.level));
-    expect(
-      after.level > before.level || after.xp == before.xp + gained,
-      isTrue,
-      reason: 'soit on passe un niveau, soit tout l\'XP est cumulé',
-    );
+    expect(repository.friends.length, before + 1);
+    expect(repository.invitations.any((i) => i.id == invitation.id), isFalse);
   });
 
-  test('accepter une invitation ajoute la personne aux amis', () {
-    final invitation = container.read(gameProvider).invitations.first;
-    final before = container.read(gameProvider).friends.length;
-
-    controller().answerInvitation(invitation.id, accept: true);
-
-    expect(container.read(gameProvider).friends.length, before + 1);
-    expect(
-      container.read(gameProvider).invitations.any((i) => i.id == invitation.id),
-      isFalse,
-    );
-  });
-
-  test('une quête du jour non faite ne compte pas dans le récap', () {
-    expect(container.read(gameProvider).dailyCompletedCount, 0);
-    expect(container.read(gameProvider).dailyXpEarned, 0);
-  });
-
-  test('sa propre participation ouvre le fil de la quête', () {
-    final quest = container.read(gameProvider).todaySet.hard;
-    final before = container.read(gameProvider).friendCompletions(quest.id).length;
-
-    controller().completeQuest(
-      quest: quest,
-      scene: Scene.sunsetOcean,
-      result: QuestCheckService.analyse(quest: quest, scene: Scene.sunsetOcean),
+  test('refuser un challenge le marque comme refusé', () async {
+    final challenge = repository.challenges.firstWhere(
+      (c) => c.state == ChallengeState.pending,
     );
 
-    final after = container.read(gameProvider).friendCompletions(quest.id);
-    expect(after.length, before + 1);
-    expect(after.first.author.id, container.read(currentUserProvider).id);
+    await controller().answerChallenge(challenge.id, accept: false);
+
+    final updated = repository.challenges.firstWhere((c) => c.id == challenge.id);
+    expect(updated.state, ChallengeState.declined);
+  });
+
+  test('les intérêts choisis sont enregistrés', () async {
+    await controller().completeOnboarding([
+      QuestCategory.nature,
+      QuestCategory.gaming,
+      QuestCategory.food,
+    ]);
+
+    expect(repository.user.interests, hasLength(3));
+    expect(repository.user.interests, contains(QuestCategory.nature));
   });
 }

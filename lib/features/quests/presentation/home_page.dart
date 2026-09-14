@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/quest.dart';
+import '../../../shared/models/user.dart';
 import '../../../shared/photos/avatar.dart';
 import '../../../shared/widgets/badges.dart';
+import '../../../shared/widgets/loading_screen.dart';
 import '../../../shared/widgets/logo.dart';
 import '../../../shared/widgets/misc.dart';
 import '../../../shared/widgets/quest_card.dart';
@@ -20,14 +22,19 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final game = ref.watch(gameProvider);
+    final user = game.user;
     final set = game.todaySet;
+
+    if (user == null || set == null) {
+      return LoadingScreen(message: game.error);
+    }
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _Header(game: game)),
+            SliverToBoxAdapter(child: _Header(game: game, user: user)),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.screenH,
@@ -79,14 +86,13 @@ class HomePage extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.game});
+  const _Header({required this.game, required this.user});
 
   final GameState game;
+  final AppUser user;
 
   @override
   Widget build(BuildContext context) {
-    final user = game.user;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenH,
@@ -204,7 +210,7 @@ class _DailySummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = game.todaySet.all.length;
+    final total = game.todaySet?.all.length ?? 0;
     final done = game.dailyCompletedCount;
     final complete = done == total;
 
@@ -249,7 +255,7 @@ class _DailySummary extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              StreakBadge(game.user.streak),
+              StreakBadge(game.user?.streak ?? 0),
             ],
           ),
         ],
@@ -266,7 +272,7 @@ class _FriendsToday extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = game.todaySet.all.length;
+    final total = game.todaySet?.all.length ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

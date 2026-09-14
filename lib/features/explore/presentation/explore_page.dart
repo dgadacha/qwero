@@ -64,7 +64,13 @@ class _WorldTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final world = game.todaySet.world;
+    final world = game.todaySet?.world;
+    if (world == null) {
+      return const Padding(
+        padding: EdgeInsets.only(bottom: AppSpacing.lg),
+        child: Skeleton(height: 232, radius: AppRadius.card),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

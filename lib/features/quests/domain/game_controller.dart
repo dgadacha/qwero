@@ -1,198 +1,190 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/backend/backend_mode.dart';
 import '../../../shared/models/completion.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/quest.dart';
-import '../../../shared/models/social.dart';
 import '../../../shared/models/user.dart';
-import '../../../shared/photos/scene.dart';
-import '../data/mock_data.dart';
+import '../data/firestore_repository.dart';
+import '../data/mock_repository.dart';
+import '../data/quest_repository.dart';
 import 'game_state.dart';
 
-/// État de jeu du prototype.
+/// Source de données active. Le mode se choisit au lancement (§125).
+final repositoryProvider = Provider<QuestRepository>((ref) {
+  final repository =
+      Backend.isFirebase ? FirestoreRepository() : MockRepository();
+  return repository;
+});
+
+/// État de jeu.
 ///
-/// En phase 2, tout ce qui touche à l'XP, au streak et à la validation part
-/// côté Cloud Functions : le serveur reste autoritaire (§8). Ici, on simule.
+/// Le contrôleur n'applique aucune règle de récompense : il relaie les actions
+/// au serveur et reflète ce que celui-ci décide (§8). En mode mocké, la même
+/// interface est servie en mémoire.
 class GameController extends Notifier<GameState> {
+  final _subscriptions = <StreamSubscription<void>>[];
+
+  QuestRepository get _repository => ref.read(repositoryProvider);
+
   @override
-  GameState build() => GameState(
-    user: MockData.me,
-    todaySet: MockData.todaySet,
-    friends: MockData.friends,
-    challenges: MockData.challenges,
-    invitations: MockData.invitations,
-    activity: MockData.activity,
-    completions: {
-      for (final quest in MockData.todaySet.all)
-        quest.id: MockData.completionsFor(quest.id),
-    },
-  );
+  GameState build() {
+    ref.onDispose(() {
+      for (final subscription in _subscriptions) {
+        subscription.cancel();
+      }
+    });
 
-  void completeOnboarding(List<QuestCategory> interests) {
-    state = state.copyWith(
-      onboardingDone: true,
-      user: state.user.copyWith(interests: interests),
-    );
+    _bind();
+    return _initialState();
   }
 
-  void startQuest(String questId) {
-    _setQuestState(questId, (s) => s.copyWith(progress: QuestProgress.inProgress));
-  }
+  /// Premier rendu immédiat en mode mocké ; écran de chargement sinon.
+  GameState _initialState() {
+    final repository = _repository;
+    if (repository is! MockRepository) return const GameState();
 
-  /// Enregistre une participation validée : XP, streak, déverrouillage social.
-  void completeQuest({
-    required Quest quest,
-    required Scene scene,
-    required QuestCheckResult result,
-    String? caption,
-  }) {
-    final completion = QuestCompletion(
-      id: 'c_me_${quest.id}',
-      questId: quest.id,
-      author: MockData.dylan,
-      scene: scene,
-      status: CompletionStatus.validated,
-      xpAwarded: quest.xpReward,
-      validationScore: result.score,
-      caption: caption,
-      ago: Duration.zero,
-    );
-
-    final user = state.user;
-    var xp = user.xp + quest.xpReward;
-    var level = user.level;
-    while (xp >= AppUser.xpForLevel(level)) {
-      xp -= AppUser.xpForLevel(level);
-      level += 1;
-    }
-
-    // Le streak avance à la première quête du jour (§53).
-    final firstOfDay = state.dailyCompletedCount == 0;
-
-    state = state.copyWith(
-      user: user.copyWith(
-        xp: xp,
-        level: level,
-        questsCompleted: user.questsCompleted + 1,
-        streak: firstOfDay ? user.streak + 1 : user.streak,
-      ),
-      questStates: {
-        ...state.questStates,
-        quest.id: UserQuestState(
-          progress: QuestProgress.completed,
-          myCompletion: completion,
-          checkResult: result,
-        ),
-      },
+    return GameState(
+      user: repository.user,
+      todaySet: null,
+      friends: repository.friends,
+      challenges: repository.challenges,
+      invitations: repository.invitations,
+      activity: repository.activity,
       completions: {
-        ...state.completions,
-        quest.id: [completion, ...state.friendCompletions(quest.id)],
+        for (final quest in _mockQuestIds(repository))
+          quest: repository.completionsOf(quest),
       },
     );
   }
 
-  void toggleReaction(String questId, String completionId, String emoji) {
-    final list = state.friendCompletions(questId);
-    final updated = [
-      for (final completion in list)
-        if (completion.id != completionId)
-          completion
-        else
-          completion.copyWith(
-            reactions: _toggle(completion.reactions, emoji),
-          ),
-    ];
-    state = state.copyWith(completions: {...state.completions, questId: updated});
+  List<String> _mockQuestIds(MockRepository repository) => const [
+        'q_easy_849',
+        'q_medium_221',
+        'q_hard_922',
+        'world_184',
+      ];
+
+  void _bind() {
+    final repository = _repository;
+
+    _listen(repository.watchUser(), (user) => state = state.copyWith(user: user));
+
+    _listen(repository.watchDailySet(), (set) {
+      state = state.copyWith(todaySet: set);
+      // Les participations d'une quête ne sont suivies qu'une fois la quête
+      // connue : inutile d'ouvrir des écoutes sur des identifiants inconnus.
+      for (final quest in set.all) {
+        _watchCompletions(quest.id);
+      }
+    });
+
+    _listen(repository.watchQuestStates(), (states) {
+      state = state.copyWith(
+        questStates: {
+          for (final entry in states.entries)
+            entry.key: state.stateOf(entry.key).copyWith(progress: entry.value),
+        },
+      );
+    });
+
+    _listen(repository.watchFriends(), (friends) => state = state.copyWith(friends: friends));
+    _listen(repository.watchActivity(), (activity) => state = state.copyWith(activity: activity));
+    _listen(
+      repository.watchChallenges(),
+      (challenges) => state = state.copyWith(challenges: challenges),
+    );
+    _listen(
+      repository.watchInvitations(),
+      (invitations) => state = state.copyWith(invitations: invitations),
+    );
   }
 
-  List<Reaction> _toggle(List<Reaction> reactions, String emoji) {
-    final index = reactions.indexWhere((r) => r.emoji == emoji);
-    if (index == -1) {
-      return [...reactions, Reaction(emoji: emoji, count: 1, mine: true)];
+  final _watchedQuests = <String>{};
+
+  void _watchCompletions(String questId) {
+    if (!_watchedQuests.add(questId)) return;
+    _listen(_repository.watchCompletions(questId), (completions) {
+      state = state.copyWith(
+        completions: {...state.completions, questId: completions},
+      );
+    });
+  }
+
+  void _listen<T>(Stream<T> stream, void Function(T value) onData) {
+    _subscriptions.add(
+      stream.listen(
+        onData,
+        onError: (Object error) => state = state.copyWith(error: _message(error)),
+      ),
+    );
+  }
+
+  String _message(Object error) =>
+      error is RepositoryException ? error.message : 'Une erreur est survenue.';
+
+  void clearError() => state = state.copyWith(error: null);
+
+  // ------------------------------------------------------------- actions
+
+  Future<void> completeOnboarding(List<QuestCategory> interests) =>
+      _guard(() => _repository.saveInterests(interests));
+
+  Future<void> startQuest(String questId) => _guard(() => _repository.startQuest(questId));
+
+  /// Dépose une preuve et rend l'identifiant de la participation à suivre.
+  Future<String?> submitProof({
+    required Quest quest,
+    required Uint8List imageBytes,
+    required DateTime capturedAt,
+  }) async {
+    try {
+      return await _repository.submitProof(
+        quest: quest,
+        imageBytes: imageBytes,
+        capturedAt: capturedAt,
+      );
+    } catch (error) {
+      state = state.copyWith(error: _message(error));
+      return null;
     }
-    final current = reactions[index];
-    final next = current.copyWith(
-      count: current.mine ? current.count - 1 : current.count + 1,
-      mine: !current.mine,
-    );
-    final result = [...reactions];
-    if (next.count <= 0) {
-      result.removeAt(index);
-    } else {
-      result[index] = next;
+  }
+
+  Stream<QuestCompletion> watchCompletion(String completionId) =>
+      _repository.watchCompletion(completionId);
+
+  Future<void> toggleReaction(String questId, String completionId, String emoji) =>
+      _guard(() => _repository.toggleReaction(questId, completionId, emoji));
+
+  Future<void> addComment(String questId, String completionId, String text) =>
+      _guard(() => _repository.addComment(questId, completionId, text));
+
+  Future<void> answerChallenge(String challengeId, {required bool accept}) =>
+      _guard(() => _repository.answerChallenge(challengeId, accept: accept));
+
+  Future<void> answerInvitation(String invitationId, {required bool accept}) =>
+      _guard(() => _repository.answerInvitation(invitationId, accept: accept));
+
+  Future<void> sendChallenge({required Friend to, required String text}) =>
+      _guard(() => _repository.sendChallenge(to: to, text: text));
+
+  Future<void> contest(String completionId) =>
+      _guard(() => _repository.contest(completionId));
+
+  Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      state = state.copyWith(error: _message(error));
     }
-    return result;
-  }
-
-  void addComment(String questId, String completionId, String text) {
-    final list = state.friendCompletions(questId);
-    final updated = [
-      for (final completion in list)
-        if (completion.id != completionId)
-          completion
-        else
-          completion.copyWith(
-            comments: [
-              ...completion.comments,
-              QuestComment(
-                id: 'cm_${DateTime.now().microsecondsSinceEpoch}',
-                author: MockData.dylan,
-                text: text,
-                ago: Duration.zero,
-              ),
-            ],
-          ),
-    ];
-    state = state.copyWith(completions: {...state.completions, questId: updated});
-  }
-
-  void answerChallenge(String challengeId, {required bool accept}) {
-    state = state.copyWith(
-      challenges: [
-        for (final challenge in state.challenges)
-          if (challenge.id != challengeId)
-            challenge
-          else
-            challenge.copyWith(
-              state: accept ? ChallengeState.accepted : ChallengeState.declined,
-            ),
-      ],
-    );
-  }
-
-  void answerInvitation(String invitationId, {required bool accept}) {
-    final invitation = state.invitations.firstWhere((i) => i.id == invitationId);
-    state = state.copyWith(
-      invitations: state.invitations.where((i) => i.id != invitationId).toList(),
-      friends: accept ? [...state.friends, invitation.friend] : state.friends,
-    );
-  }
-
-  void sendChallenge({required Friend to, required Quest quest}) {
-    state = state.copyWith(
-      challenges: [
-        FriendChallenge(
-          id: 'ch_${DateTime.now().microsecondsSinceEpoch}',
-          from: to,
-          quest: quest,
-          state: ChallengeState.pending,
-          timeLeft: const Duration(hours: 24),
-          outgoing: true,
-        ),
-        ...state.challenges,
-      ],
-    );
-  }
-
-  void _setQuestState(String questId, UserQuestState Function(UserQuestState) update) {
-    state = state.copyWith(
-      questStates: {...state.questStates, questId: update(state.stateOf(questId))},
-    );
   }
 }
 
 final gameProvider = NotifierProvider<GameController, GameState>(GameController.new);
 
 /// Raccourcis de lecture les plus fréquents.
-final currentUserProvider = Provider((ref) => ref.watch(gameProvider).user);
-final dailySetProvider = Provider((ref) => ref.watch(gameProvider).todaySet);
+final currentUserProvider = Provider<AppUser?>((ref) => ref.watch(gameProvider).user);
+final dailySetProvider = Provider<DailyQuestSet?>((ref) => ref.watch(gameProvider).todaySet);

@@ -209,7 +209,7 @@ class _UnlockedFeed extends ConsumerWidget {
         final completion = completions[index - 1];
         return QuestFeedCompletion(
           completion: completion,
-          isMine: completion.author.id == ref.read(currentUserProvider).id,
+          isMine: completion.author.id == ref.read(currentUserProvider)?.id,
           onReaction: (emoji) =>
               controller.toggleReaction(quest.id, completion.id, emoji),
           onComment: () => _openComments(context, ref, completion),

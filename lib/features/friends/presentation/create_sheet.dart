@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/enums.dart';
 import '../../../shared/models/quest.dart';
 import '../../../shared/models/user.dart';
 import '../../../shared/photos/avatar.dart';
-import '../../../shared/photos/scene.dart';
 import '../../../shared/widgets/buttons.dart';
 import '../../quests/domain/game_controller.dart';
 import '../../../core/l10n/labels.dart';
@@ -166,21 +164,11 @@ class _ChallengeComposerState extends ConsumerState<_ChallengeComposer> {
 
     final target = _target;
     if (target != null) {
-      ref.read(gameProvider.notifier).sendChallenge(
-            to: target,
-            quest: Quest(
-              id: 'q_user_${DateTime.now().microsecondsSinceEpoch}',
-              title: text,
-              description: 'Challenge lancé par toi.',
-              category: QuestCategory.funny,
-              difficulty: QuestDifficulty.medium,
-              xpReward: 150,
-              estimatedMinutes: 20,
-              scene: Scene.nightCity,
-              requirements: _requirements,
-            ),
-          );
+      // La consigne part telle quelle : c'est le serveur qui l'analyse, la
+      // modère et en tire les critères (§44).
+      await ref.read(gameProvider.notifier).sendChallenge(to: target, text: text);
     }
+
     if (!mounted) return;
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(

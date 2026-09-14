@@ -7,6 +7,7 @@ import '../../../shared/models/user.dart' as models;
 import '../../../shared/photos/avatar.dart';
 import '../../../shared/widgets/badges.dart';
 import '../../../shared/widgets/buttons.dart';
+import '../../../shared/widgets/loading_screen.dart';
 import '../../../shared/widgets/misc.dart';
 import '../../quests/domain/game_controller.dart';
 import '../../../core/l10n/labels.dart';
@@ -19,6 +20,7 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    if (user == null) return const LoadingScreen();
 
     return Scaffold(
       body: SafeArea(

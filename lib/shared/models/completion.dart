@@ -56,10 +56,14 @@ abstract class QuestCompletion with _$QuestCompletion {
     required CompletionStatus status,
     @Default(0) int xpAwarded,
     @Default(0.0) double validationScore,
+    /// Critères retenus par QuestCheck, affichés sur l'écran de réussite (§38).
+    @Default(<QuestCheckItem>[]) List<QuestCheckItem> checks,
     String? caption,
     @Default(Duration(hours: 1)) Duration ago,
     @Default(<Reaction>[]) List<Reaction> reactions,
     @Default(<QuestComment>[]) List<QuestComment> comments,
+    /// Dénormalisé par le serveur : le feed n'a pas à lire la sous-collection.
+    @Default(0) int commentCount,
     @Default(false) bool isFavorite,
     @Default(QuestVisibility.friends) QuestVisibility visibility,
   }) = _QuestCompletion;

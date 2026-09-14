@@ -26,18 +26,22 @@ abstract class UserQuestState with _$UserQuestState {
 @freezed
 abstract class GameState with _$GameState {
   const factory GameState({
-    required AppUser user,
-    required DailyQuestSet todaySet,
-    required List<Friend> friends,
-    required List<FriendChallenge> challenges,
-    required List<FriendInvitation> invitations,
-    required List<FriendActivity> activity,
+    AppUser? user,
+    DailyQuestSet? todaySet,
+    @Default(<Friend>[]) List<Friend> friends,
+    @Default(<FriendChallenge>[]) List<FriendChallenge> challenges,
+    @Default(<FriendInvitation>[]) List<FriendInvitation> invitations,
+    @Default(<FriendActivity>[]) List<FriendActivity> activity,
     @Default(<String, UserQuestState>{}) Map<String, UserQuestState> questStates,
     @Default(<String, List<QuestCompletion>>{}) Map<String, List<QuestCompletion>> completions,
-    @Default(false) bool onboardingDone,
+    /// Message d'erreur à montrer au joueur, effacé dès qu'il est lu.
+    String? error,
   }) = _GameState;
 
   const GameState._();
+
+  /// L'application a de quoi afficher le tableau des quêtes.
+  bool get isReady => user != null && todaySet != null;
 
   UserQuestState stateOf(String questId) =>
       questStates[questId] ?? const UserQuestState();
@@ -45,18 +49,16 @@ abstract class GameState with _$GameState {
   bool isCompleted(String questId) =>
       stateOf(questId).progress == QuestProgress.completed;
 
-  /// Participations des amis, hors la sienne.
   List<QuestCompletion> friendCompletions(String questId) =>
       completions[questId] ?? const [];
 
   /// Nombre de quêtes du jour terminées (§130).
   int get dailyCompletedCount =>
-      todaySet.all.where((q) => isCompleted(q.id)).length;
+      todaySet?.all.where((q) => isCompleted(q.id)).length ?? 0;
 
-  int get dailyXpEarned => todaySet.all
-      .where((q) => isCompleted(q.id))
-      .fold(0, (sum, q) => sum + q.xpReward);
+  int get dailyXpEarned =>
+      todaySet?.all.where((q) => isCompleted(q.id)).fold(0, (sum, q) => sum! + q.xpReward) ?? 0;
 
   int get pendingChallenges =>
-      challenges.where((c) => c.state == ChallengeState.pending).length;
+      challenges.where((c) => c.state == ChallengeState.pending && !c.outgoing).length;
 }
